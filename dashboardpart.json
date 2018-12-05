@@ -1,0 +1,213 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dashboardName": {
+      "type": "string",
+      "defaultValue": "Simons dashboard"
+    }
+  },
+  "variables": {
+
+  },
+  "resources": [
+    {
+      "name": "[parameters('dashboardName')]",
+      "type": "Microsoft.Portal/dashboards",
+      "location": "centralus",
+      "apiVersion": "2015-08-01-preview",
+      "tags": {
+        "hidden-title": "[parameters('dashboardName')]"
+      },
+      "properties": {
+        "lenses": {
+          "0": {
+            "order": 0,
+            "parts": {
+              "0": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "colSpan": 7,
+                  "rowSpan": 5
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "2c21b548-88aa-459e-813f-056d0d2ec8a7",
+                        "ResourceGroup": "f5demo-oms",
+                        "Name": "f5demo-oms-workspace",
+                        "ResourceId": "/subscriptions/2c21b548-88aa-459e-813f-056d0d2ec8a7/resourcegroups/f5demo-oms/providers/microsoft.operationalinsights/workspaces/f5demo-oms-workspace"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)\n| render timechart\n"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "TimeGenerated",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "events_count",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "attack_type_s",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "/subscriptions/2c21b548-88aa-459e-813f-056d0d2ec8a7/resourceGroups/dashboards/providers/Microsoft.Portal/dashboards/35d9fec3-a59c-45fc-ad8d-f57c6be0f4dc"
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "11a91233-1869-4f57-a28d-d370801a81fe"
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Analytics"
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "f5demo-oms-workspace"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "workspace"
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "AnalyticsChart"
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "Line"
+                    },
+                    {
+                      "name": "TimeRange",
+                      "isOptional": true
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
+                  "settings": {},
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "1": {
+                "position": {
+                  "x": 7,
+                  "y": 0,
+                  "colSpan": 7,
+                  "rowSpan": 5
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "2c21b548-88aa-459e-813f-056d0d2ec8a7",
+                        "ResourceGroup": "f5demo-oms",
+                        "Name": "f5demo-oms-workspace",
+                        "ResourceId": "/subscriptions/2c21b548-88aa-459e-813f-056d0d2ec8a7/resourcegroups/f5demo-oms/providers/microsoft.operationalinsights/workspaces/f5demo-oms-workspace"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 30m)\n| render barchart \n"
+                    },
+                    {
+                      "name": "TimeRange",
+                      "value": "P1D"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "TimeGenerated",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "count_",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "violations_s",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "DashboardId",
+                      "value": "/subscriptions/2c21b548-88aa-459e-813f-056d0d2ec8a7/resourceGroups/dashboards/providers/Microsoft.Portal/dashboards/35d9fec3-a59c-45fc-ad8d-f57c6be0f4dc"
+                    },
+                    {
+                      "name": "PartId",
+                      "value": "c4c8c193-9f47-48f0-a398-5af981dd4040"
+                    },
+                    {
+                      "name": "PartTitle",
+                      "value": "Analytics"
+                    },
+                    {
+                      "name": "PartSubTitle",
+                      "value": "f5demo-oms-workspace"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "workspace"
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "AnalyticsChart"
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "Bar"
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
+                  "settings": {},
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+  }
+}
