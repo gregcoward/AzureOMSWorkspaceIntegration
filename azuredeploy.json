@@ -139,8 +139,7 @@
   "variables": {
     "workspaceName": "[concat('f5oms', substring(uniqueString(resourceGroup().id),0,6))]",
     "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]",
-    "mlVersion": "2016-04-01",
-    "workspacekey": "[listWorkspaceKeys(variables('workspaceId'), variables('mlVersion')).primaryToken]",
+    "workspaceKey": "[listKeys(variables('workspaceId'),'2015-11-01-preview').primarySharedKey]",
     "dashboardName": "F5AdvanceWafDashboard",
     "f5CloudLibsTag": "develop",
     "location": "[resourceGroup().location]",
@@ -165,7 +164,7 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "singleQuote": "'",
-    "commandArgs": "[concat('-m ', parameters('applicationProtocols'), ' -d ', parameters('solutionDeploymentName'), ' -n ', parameters('applicationAddress'), ' -h ', parameters('applicationPort'), ' -t ', toLower(parameters('applicationType')), ' -l ', toLower(parameters('blockingLevel')), ' -a ', parameters('customPolicy'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'), ' -w ', variables('workspaceId'), ' -k ', variables('workspacekey'))]"
+    "commandArgs": "[concat('-m ', parameters('applicationProtocols'), ' -d ', parameters('solutionDeploymentName'), ' -n ', parameters('applicationAddress'), ' -h ', parameters('applicationPort'), ' -t ', toLower(parameters('applicationType')), ' -l ', toLower(parameters('blockingLevel')), ' -a ', parameters('customPolicy'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'), ' -w ', variables('workspaceId'), ' -k ', variables('workspaceKey'))]"
   },
   "resources": [
     {
