@@ -496,9 +496,9 @@
         "name": "wafcopy"
       },
       "plan": {
-        "name": "[variables('skuToUse')]",
+        "name": "f5-bigip-virtual-edition-1g-waf-hourly",
         "publisher": "f5-networks",
-        "product": "f5-big-ip-hourly"
+        "product": "f5-big-ip-advanced-waf"
       },
       "properties": {
         "availabilitySet": {
@@ -515,9 +515,9 @@
         "storageProfile": {
           "imageReference": {
             "publisher": "f5-networks",
-            "offer": "f5-big-ip-hourly",
-            "sku": "[variables('skuToUse')]",
-            "version": "latest"
+            "offer": "f5-big-ip-advanced-waf",
+            "sku": "f5-bigip-virtual-edition-1g-waf-hourly",
+            "version": "14.0.001000"
           },
           "osDisk": {
             "name": "[concat('osdisk',copyindex())]",
