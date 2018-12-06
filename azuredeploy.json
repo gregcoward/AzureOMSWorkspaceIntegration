@@ -1,69 +1,179 @@
 {
-  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
-  "contentVersion": "1.0.0.0",
+  "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json",
+  "contentVersion": "5.5.0.0",
   "parameters": {
+    "adminUsername": {
+      "defaultValue": "azureuser",
+      "metadata": {
+        "description": "User name for the Virtual Machine."
+      },
+      "type": "string"
+    },
+    "authenticationType": {
+      "allowedValues": [
+        "password",
+        "sshPublicKey"
+      ],
+      "defaultValue": "password",
+      "metadata": {
+        "description": "Type of authentication to use on the Virtual Machine, password based authentication or key based authentication."
+      },
+      "type": "string"
+    },
+    "adminPasswordOrKey": {
+      "metadata": {
+        "description": "Password or SSH public key to login to the Virtual Machine. Note: There are a number of special characters that you should avoid using for F5 product user accounts.  See [K2873](https://support.f5.com/csp/article/K2873) for details. Note: If using key-based authentication, this should be the public key as a string, typically starting with **---- BEGIN SSH2 PUBLIC KEY ----** and ending with **---- END SSH2 PUBLIC KEY ----**."
+      },
+      "type": "securestring"
+    },
+    "dnsLabel": {
+      "defaultValue": "",
+      "metadata": {
+        "description": "Unique DNS Name for the Public IP address used to access the Virtual Machine."
+      },
+      "type": "string"
+    },
+    "instanceName": {
+      "defaultValue": "f5vm01",
+      "metadata": {
+        "description": "Name of the Virtual Machine."
+      },
+      "type": "string"
+    },
+    "instanceType": {
+      "allowedValues": [
+        "Standard_A2",
+        "Standard_A3",
+        "Standard_A4",
+        "Standard_A5",
+        "Standard_A6",
+        "Standard_A7",
+        "Standard_D2",
+        "Standard_D3",
+        "Standard_D4",
+        "Standard_D11",
+        "Standard_D12",
+        "Standard_D13",
+        "Standard_D14",
+        "Standard_DS2",
+        "Standard_DS3",
+        "Standard_DS4",
+        "Standard_DS11",
+        "Standard_DS12",
+        "Standard_DS13",
+        "Standard_DS14",
+        "Standard_D2_v2",
+        "Standard_D3_v2",
+        "Standard_D4_v2",
+        "Standard_D5_v2",
+        "Standard_D11_v2",
+        "Standard_D12_v2",
+        "Standard_D13_v2",
+        "Standard_D14_v2",
+        "Standard_D15_v2",
+        "Standard_DS2_v2",
+        "Standard_DS3_v2",
+        "Standard_DS4_v2",
+        "Standard_DS5_v2",
+        "Standard_DS11_v2",
+        "Standard_DS12_v2",
+        "Standard_DS13_v2",
+        "Standard_DS14_v2",
+        "Standard_DS15_v2",
+        "Standard_F2",
+        "Standard_F4",
+        "Standard_F8",
+        "Standard_F2S",
+        "Standard_F4S",
+        "Standard_F8S",
+        "Standard_F16S",
+        "Standard_G2",
+        "Standard_G3",
+        "Standard_G4",
+        "Standard_G5",
+        "Standard_GS2",
+        "Standard_GS3",
+        "Standard_GS4",
+        "Standard_GS5"
+      ],
+      "defaultValue": "Standard_DS2_v2",
+      "metadata": {
+        "description": "Instance size of the Virtual Machine."
+      },
+      "type": "string"
+    },
+    "imageName": {
+      "allowedValues": [
+        "Best25Mbps",
+        "Best200Mbps",
+        "Best1Gbps",
+        "Best5Gbps",
+        "Better25Mbps",
+        "Better200Mbps",
+        "Better1Gbps",
+        "Better5Gbps",
+        "Good25Mbps",
+        "Good200Mbps",
+        "Good1Gbps",
+        "Good5Gbps",
+        "AdvancedWaf25Mbps",
+        "AdvancedWaf200Mbps",
+        "AdvancedWaf1Gbps",
+        "PerAppVeLTM25Mbps",
+        "PerAppVeLTM200Mbps",
+        "PerAppVeAdvancedWaf25Mbps",
+        "PerAppVeAdvancedWaf200Mbps"
+      ],
+      "defaultValue": "Best1Gbps",
+      "metadata": {
+        "description": "F5 SKU (image) to you want to deploy. Note: The disk size of the VM will be determined based on the option you select.  **Important**: If intending to provision multiple modules, ensure the appropriate value is selected, such as **Best** instead of **Good**."
+      },
+      "type": "string"
+    },
+    "bigIpVersion": {
+      "allowedValues": [
+        "13.1.100000",
+        "12.1.303000",
+        "latest"
+      ],
+      "defaultValue": "13.1.100000",
+      "metadata": {
+        "description": "F5 BIG-IP version you want to use."
+      },
+      "type": "string"
+    },
+    "vnetAddressPrefix": {
+      "defaultValue": "10.0",
+      "metadata": {
+        "description": "The start of the CIDR block the BIG-IP VEs use when creating the Vnet and subnets.  You MUST type just the first two octets of the /16 virtual network that will be created, for example '10.0', '10.100', 192.168'."
+      },
+      "type": "string"
+    },
+    "ntpServer": {
+      "defaultValue": "0.pool.ntp.org",
+      "metadata": {
+        "description": "Leave the default NTP server the BIG-IP uses, or replace the default NTP server with the one you want to use."
+      },
+      "type": "string"
+    },
+    "timeZone": {
+      "defaultValue": "UTC",
+      "metadata": {
+        "description": "If you would like to change the time zone the BIG-IP uses, enter the time zone you want to use. This is based on the tz database found in /usr/share/zoneinfo (see the full list [here](https://github.com/F5Networks/f5-azure-arm-templates/blob/master/azure-timezone-list.md)). Example values: UTC, US/Pacific, US/Eastern, Europe/London or Asia/Singapore."
+      },
+      "type": "string"
+    },
+    "customImage": {
+      "defaultValue": "OPTIONAL",
+      "metadata": {
+        "description": "If you would like to deploy using a local BIG-IP image, provide either the full URL to the VHD in Azure storage **or** the full resource ID to an existing Microsoft.Compute image resource.  **Note**: Unless specifically required, leave the default of **OPTIONAL**."
+      },
+      "type": "string"
+    },
     "solutionDeploymentName": {
       "type": "string",
       "metadata": {
         "description": "A unique name for this deployment."
-      }
-    },
-    "numberOfInstances": {
-      "type": "int",
-      "defaultValue": 1,
-      "allowedValues": [ 1 ],
-      "metadata": {
-        "description": "The number of Web Application Firewalls that will be deployed in front of your application."
-      }
-    },
-    "instanceType": {
-      "type": "string",
-      "defaultValue": "Standard_A4",
-      "metadata": {
-        "description": "The size of the Virtual Hardware Instance."
-      },
-      "allowedValues": [
-        "Standard_A3",
-        "Standard_A4",
-        "Standard_D2",
-        "Standard_D3",
-        "Standard_D5",
-        "Standard_D2_v2",
-        "Standard_D3_v2",
-        "Standard_D5_v2",
-        "Standard_F2",
-        "Standard_F4"
-      ]
-    },
-    "instanceThroughput": {
-      "type": "string",
-      "defaultValue": "1G",
-      "metadata": {
-        "description": "The licensed throughput of the Virtual Hardware Instance."
-      },
-      "allowedValues": [
-        "1G",
-        "200M",
-        "25M"
-      ]
-    },
-    "adminUsername": {
-      "type": "string",
-      "defaultValue": "azureuser",
-      "metadata": {
-        "description": "User name to login to the Web Application Firewall."
-      }
-    },
-    "adminPassword": {
-      "type": "securestring",
-      "metadata": {
-        "description": "Password to login to the Web Application Firewall."
-      }
-    },
-    "dnsLabel": {
-      "type": "string",
-      "metadata": {
-        "description": "Unique DNS Name for the Public IP used to access the Web Application Firewalls for management."
       }
     },
     "applicationProtocols": {
@@ -119,58 +229,277 @@
       }
     },
     "restrictedSrcAddress": {
-      "type": "string",
       "defaultValue": "*",
       "metadata": {
-        "description": "Restricts management access to a specific network or address. Enter a IP address or address range in CIDR notation, or asterisk for all sources."
-      }
+        "description": "This field restricts management access to a specific network or address. Enter an IP address or address range in CIDR notation, or asterisk for all sources"
+      },
+      "type": "string"
     },
     "tagValues": {
-      "type": "object",
       "defaultValue": {
-        "application": "WAF",
+        "application": "APP",
+        "cost": "COST",
         "environment": "ENV",
         "group": "GROUP",
-        "owner": "OWNER",
-        "cost": "COST"
-      }
+        "owner": "OWNER"
+      },
+      "metadata": {
+        "description": "Default key/value resource tags will be added to the resources in this deployment, if you would like the values to be unique adjust them as needed for each key."
+      },
+      "type": "object"
+    },
+    "allowUsageAnalytics": {
+      "allowedValues": [
+        "Yes",
+        "No"
+      ],
+      "defaultValue": "Yes",
+      "metadata": {
+        "description": "This deployment can send anonymous statistics to F5 to help us determine how to improve our solutions. If you select **No** statistics are not sent."
+      },
+      "type": "string"
     }
   },
   "variables": {
     "baseUrl": "https://raw.githubusercontent.com/gregcoward/AzureOMSWorkspaceIntegration/master",
+    "scriptName": "deploy_waf.sh",
+    "scriptLoc": "[concat(variables('baseUrl'), '/', variables('scriptName'))]",
     "omsTemplateLink": "[concat(variables('baseUrl'), '/omsdeploy.json')]",
-    "f5CloudLibsTag": "develop",
-    "apiVersionCompute": "2016-03-30",
-    "apiVersionNetwork": "2015-06-15",
-    "apiVersionStorage": "2015-06-15",
-    "apiVersionTemplate": "2015-01-01",
+    "paygImageMap": {
+      "advancedwaf1gbps": {
+        "offer": "f5-big-ip-advanced-waf",
+        "sku": "f5-bigip-virtual-edition-1g-waf-hourly"
+      },
+      "advancedwaf200mbps": {
+        "offer": "f5-big-ip-advanced-waf",
+        "sku": "f5-bigip-virtual-edition-200m-waf-hourly"
+      },
+      "advancedwaf25mbps": {
+        "offer": "f5-big-ip-advanced-waf",
+        "sku": "f5-bigip-virtual-edition-25m-waf-hourly"
+      },
+      "best1gbps": {
+        "offer": "f5-big-ip-best",
+        "sku": "f5-bigip-virtual-edition-1g-best-hourly"
+      },
+      "best200mbps": {
+        "offer": "f5-big-ip-best",
+        "sku": "f5-bigip-virtual-edition-200m-best-hourly"
+      },
+      "best25mbps": {
+        "offer": "f5-big-ip-best",
+        "sku": "f5-bigip-virtual-edition-25m-best-hourly"
+      },
+      "best5gbps": {
+        "offer": "f5-big-ip-best",
+        "sku": "f5-bigip-virtual-edition-5g-best-hourly"
+      },
+      "better1gbps": {
+        "offer": "f5-big-ip-better",
+        "sku": "f5-bigip-virtual-edition-1g-better-hourly"
+      },
+      "better200mbps": {
+        "offer": "f5-big-ip-better",
+        "sku": "f5-bigip-virtual-edition-200m-better-hourly"
+      },
+      "better25mbps": {
+        "offer": "f5-big-ip-better",
+        "sku": "f5-bigip-virtual-edition-25m-better-hourly"
+      },
+      "better5gbps": {
+        "offer": "f5-big-ip-better",
+        "sku": "f5-bigip-virtual-edition-5g-better-hourly"
+      },
+      "good1gbps": {
+        "offer": "f5-big-ip-good",
+        "sku": "f5-bigip-virtual-edition-1g-good-hourly"
+      },
+      "good200mbps": {
+        "offer": "f5-big-ip-good",
+        "sku": "f5-bigip-virtual-edition-200m-good-hourly"
+      },
+      "good25mbps": {
+        "offer": "f5-big-ip-good",
+        "sku": "f5-bigip-virtual-edition-25m-good-hourly"
+      },
+      "good5gbps": {
+        "offer": "f5-big-ip-good",
+        "sku": "f5-bigip-virtual-edition-5g-good-hourly"
+      },
+      "perappveadvancedwaf200mbps": {
+        "offer": "f5-big-ip-per-app-ve",
+        "sku": "f5-big-ip-per-app-ve-awf-200m-hourly"
+      },
+      "perappveadvancedwaf25mbps": {
+        "offer": "f5-big-ip-per-app-ve",
+        "sku": "f5-big-ip-per-app-ve-awf-25m-hourly"
+      },
+      "perappveltm200mbps": {
+        "offer": "f5-big-ip-per-app-ve",
+        "sku": "f5-big-ip-per-app-ve-ltm-200m-hourly"
+      },
+      "perappveltm25mbps": {
+        "offer": "f5-big-ip-per-app-ve",
+        "sku": "f5-big-ip-per-app-ve-ltm-25m-hourly"
+      }
+    },
+    "bigIpNicPortMap": {
+      "1": {
+        "Port": "[parameters('bigIpVersion')]"
+      },
+      "2": {
+        "Port": "443"
+      },
+      "3": {
+        "Port": "443"
+      },
+      "4": {
+        "Port": "443"
+      },
+      "5": {
+        "Port": "443"
+      },
+      "6": {
+        "Port": "443"
+      }
+    },
+    "bigIpVersionPortMap": {
+      "12.1.303000": {
+        "Port": 443
+      },
+      "13.1.100000": {
+        "Port": 8443
+      },
+      "443": {
+        "Port": 443
+      },
+      "latest": {
+        "Port": 8443
+      }
+    },
+    "computeApiVersion": "2017-12-01",
+    "networkApiVersion": "2017-11-01",
+    "storageApiVersion": "2017-10-01",
+    "templateApiVersion": "2015-01-01",
     "location": "[resourceGroup().location]",
-    "instanceThroughputToLower": "[toLower(parameters('instanceThroughput'))]",
-    "skuToUse": "[concat('f5-bigip-virtual-edition-', variables('instanceThroughputToLower'),'-best-hourly')]",
-    "virtualNetworkName": "[concat(parameters('dnsLabel'),'-vnet1')]",
-    "vnetAddressPrefix": "10.10.0.0/16",
-    "subnetName": "[concat(parameters('dnsLabel'),'-subnet1')]",
-    "subnetPrefix": "10.10.1.0/24",
-    "ipAddress": "10.10.1.",
-    "nicNamePrefix": "[concat(parameters('dnsLabel'),'-nic')]",
-    "loadBalancerName": "[concat(parameters('dnsLabel'),'-lb')]",
-    "availabilitySetName": "[concat(parameters('dnsLabel'),'-as')]",
-    "newStorageAccountName": "[concat(parameters('dnsLabel'),'st')]",
-    "wafNamePrefix": "[concat(parameters('dnsLabel'),'-waf')]",
-    "nsgID": "[resourceId('Microsoft.Network/networkSecurityGroups/',concat(parameters('dnsLabel'),'-nsg'))]",
-    "lbID": "[resourceId('Microsoft.Network/loadBalancers',variables('loadBalancerName'))]",
-    "frontEndIPConfigID": "[concat(variables('lbID'),'/frontendIPConfigurations/loadBalancerFrontEnd')]",
-    "guiMgtID": "[concat(variables('lbID'),'/inboundNatRules/guimgt')]",
-    "sshMgtID": "[concat(variables('lbID'),'/inboundNatRules/sshmgt')]",
-    "publicIPID": "[resourceId('Microsoft.Network/publicIPAddresses',parameters('dnsLabel'))]",
-    "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
-    "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
+    "adminPasswordOrKey": "[replace(parameters('adminPasswordOrKey'),'\\n', '\n')]",
+    "linuxConfiguration": {
+      "disablePasswordAuthentication": true,
+      "ssh": {
+        "publicKeys": [
+          {
+            "keyData": "[variables('adminPasswordOrKey')]",
+            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]"
+          }
+        ]
+      }
+    },
+    "subscriptionID": "[subscription().subscriptionId]",
+    "resourceGroupName": "[resourceGroup().name]",
     "singleQuote": "'",
-    "commandArgs": "[concat('-m ', parameters('applicationProtocols'), ' -d ', parameters('solutionDeploymentName'), ' -n ', parameters('applicationAddress'), ' -h ', parameters('applicationPort'), ' -t ', toLower(parameters('applicationType')), ' -l ', toLower(parameters('blockingLevel')), ' -a ', parameters('customPolicy'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'))]"
+    "f5CloudLibsTag": "v4.5.0",
+    "f5CloudLibsAzureTag": "v2.5.0",
+    "f5NetworksTag": "v5.5.0.0",
+    "f5CloudIappsTag": "v2.2.0",
+    "verifyHash": "[concat(variables('singleQuote'), 'cli script /Common/verifyHash {\nproc script::run {} {\n        if {[catch {\n            set hashes(f5-cloud-libs.tar.gz) 2481d285c33b97ed083f6e48edcfbd1d5f8fb1dea0578f429017706a1829d3625fab6aff8f55fe71b2b5929410110043a17d57179d833f0f51c90fb0f6ff292d\n            set hashes(f5-cloud-libs-aws.tar.gz) 35361a507a4ef0c8f5205c05d913dbea024f287777e86dccd0c345560a637c106aeab4150af9eafd828929eb7798184e076ea5359e16b4c2d5544cc380800711\n            set hashes(f5-cloud-libs-azure.tar.gz) def8780b308a7cfea52d524e5ad07121e7091ecb826e01c87bc758c90fee5c25d12a2a4a06dc78ff64cb478a471f8514bde2cd5da19fb427de28598272a978bb\n            set hashes(f5-cloud-libs-gce.tar.gz) 9d0d8c32909a272cc9a56dad60121916830462ba26c9bb1d731c10f4e33ba7a856520db55016097db2043e27d048027924470a8e68f366de0339a43b7b68b0d6\n            set hashes(f5-cloud-libs-openstack.tar.gz) 5c83fe6a93a6fceb5a2e8437b5ed8cc9faf4c1621bfc9e6a0779f6c2137b45eab8ae0e7ed745c8cf821b9371245ca29749ca0b7e5663949d77496b8728f4b0f9\n            set hashes(asm-policy-linux.tar.gz) 63b5c2a51ca09c43bd89af3773bbab87c71a6e7f6ad9410b229b4e0a1c483d46f1a9fff39d9944041b02ee9260724027414de592e99f4c2475415323e18a72e0\n            set hashes(f5.http.v1.2.0rc4.tmpl) 47c19a83ebfc7bd1e9e9c35f3424945ef8694aa437eedd17b6a387788d4db1396fefe445199b497064d76967b0d50238154190ca0bd73941298fc257df4dc034\n            set hashes(f5.http.v1.2.0rc6.tmpl) 811b14bffaab5ed0365f0106bb5ce5e4ec22385655ea3ac04de2a39bd9944f51e3714619dae7ca43662c956b5212228858f0592672a2579d4a87769186e2cbfe\n            set hashes(f5.http.v1.2.0rc7.tmpl) 21f413342e9a7a281a0f0e1301e745aa86af21a697d2e6fdc21dd279734936631e92f34bf1c2d2504c201f56ccd75c5c13baa2fe7653213689ec3c9e27dff77d\n            set hashes(f5.aws_advanced_ha.v1.3.0rc1.tmpl) 9e55149c010c1d395abdae3c3d2cb83ec13d31ed39424695e88680cf3ed5a013d626b326711d3d40ef2df46b72d414b4cb8e4f445ea0738dcbd25c4c843ac39d\n            set hashes(f5.aws_advanced_ha.v1.4.0rc1.tmpl) de068455257412a949f1eadccaee8506347e04fd69bfb645001b76f200127668e4a06be2bbb94e10fefc215cfc3665b07945e6d733cbe1a4fa1b88e881590396\n            set hashes(f5.aws_advanced_ha.v1.4.0rc2.tmpl) 6ab0bffc426df7d31913f9a474b1a07860435e366b07d77b32064acfb2952c1f207beaed77013a15e44d80d74f3253e7cf9fbbe12a90ec7128de6facd097d68f\n            set hashes(f5.aws_advanced_ha.v1.4.0rc3.tmpl) 2f2339b4bc3a23c9cfd42aae2a6de39ba0658366f25985de2ea53410a745f0f18eedc491b20f4a8dba8db48970096e2efdca7b8efffa1a83a78e5aadf218b134\n            set hashes(asm-policy.tar.gz) 2d39ec60d006d05d8a1567a1d8aae722419e8b062ad77d6d9a31652971e5e67bc4043d81671ba2a8b12dd229ea46d205144f75374ed4cae58cefa8f9ab6533e6\n            set hashes(deploy_waf.sh) 1a3a3c6274ab08a7dc2cb73aedc8d2b2a23cd9e0eb06a2e1534b3632f250f1d897056f219d5b35d3eed1207026e89989f754840fd92969c515ae4d829214fb74\n            set hashes(f5.policy_creator.tmpl) 06539e08d115efafe55aa507ecb4e443e83bdb1f5825a9514954ef6ca56d240ed00c7b5d67bd8f67b815ee9dd46451984701d058c89dae2434c89715d375a620\n            set hashes(f5.service_discovery.tmpl) 01dc84d4a4be2bc484ab57b771f186f87d4b664e1fb9a073e025b5362ee14d712b970eef4041f794f66286fb1429418aab16e832c89df8a25e02229c68b83de8\n            set hashes(f5.cloud_logger.v1.0.0.tmpl) 64a0ed3b5e32a037ba4e71d460385fe8b5e1aecc27dc0e8514b511863952e419a89f4a2a43326abb543bba9bc34376afa114ceda950d2c3bd08dab735ff5ad20\n\n            set file_path [lindex $tmsh::argv 1]\n            set file_name [file tail $file_path]\n\n            if {![info exists hashes($file_name)]} {\n                tmsh::log err \"No hash found for $file_name\"\n                exit 1\n            }\n\n            set expected_hash $hashes($file_name)\n            set computed_hash [lindex [exec /usr/bin/openssl dgst -r -sha512 $file_path] 0]\n            if { $expected_hash eq $computed_hash } {\n                exit 0\n            }\n            tmsh::log err \"Hash does not match for $file_path\"\n            exit 1\n        }]} {\n            tmsh::log err {Unexpected error in verifyHash}\n            exit 1\n        }\n    }\n    script-signature rDemf/H1eVNT9zqev0rGMqJMAsDqmxZOsgwl7LuxD0bocfXqCnZyIt5B6e1nAFWJRwI2m4uKeknO58YAoNJo/+HvoG+4ifoAT71d5f0o2JX13kbvb4qEJAdl0nkGjy2j62CeHSl40+XimWzCBn8FA3bFOhfP6kfs/gAo7OhokBbk4YTxa1Y16hI5rf5Z9fS78/Km2Fs55XU18KKwL81lWyA/6by46V2LvmGYc461j8yFGLsaJLOsgJ6HZQBKRyH1ZrVAA5mdqOU7i9P1VsRgvgLhE/WBraHIDz5olowiq5AfiqnRG//Z6Wn4QgZONn4IGPMViPq+f2NxrDHlirfy/A==\n    signing-key /Common/f5-irule\n}', variables('singleQuote'))]",
+    "installCloudLibs": "[concat(variables('singleQuote'), '#!/bin/bash\necho about to execute\nchecks=0\nwhile [ $checks -lt 120 ]; do echo checking mcpd\n/usr/bin/tmsh -a show sys mcp-state field-fmt | grep -q running\nif [ $? == 0 ]; then\necho mcpd ready\nbreak\nfi\necho mcpd not ready yet\nlet checks=checks+1\nsleep 1\ndone\necho loading verifyHash script\n/usr/bin/tmsh load sys config merge file /config/verifyHash\nif [ $? != 0 ]; then\necho cannot validate signature of /config/verifyHash\nexit 1\nfi\necho loaded verifyHash\n\nconfig_loc=\"/config/cloud/\"\nhashed_file_list=\"${config_loc}f5-cloud-libs.tar.gz f5.service_discovery.tmpl f5.cloud_logger.v1.0.0.tmpl\"\nfor file in $hashed_file_list; do\necho \"verifying $file\"\n/usr/bin/tmsh run cli script verifyHash $file\nif [ $? != 0 ]; then\necho \"$file is not valid\"\nexit 1\nfi\necho \"verified $file\"\ndone\necho \"expanding $hashed_file_list\"\ntar xfz /config/cloud/f5-cloud-libs.tar.gz --warning=no-unknown-keyword -C /config/cloud/azure/node_modules/@f5devcentral\ntouch /config/cloud/cloudLibsReady', variables('singleQuote'))]",
+    "dnsLabel": "[toLower(parameters('dnsLabel'))]",
+    "imageNameToLower": "[toLower(parameters('imageName'))]",
+    "skuToUse": "[variables('paygImageMap')[variables('imageNameToLower')]['sku']]",
+    "offerToUse": "[variables('paygImageMap')[variables('imageNameToLower')]['offer']]",
+    "imagePlan": {
+      "name": "[variables('skuToUse')]",
+      "product": "[variables('offerToUse')]",
+      "publisher": "f5-networks"
+    },
+    "imageReference": {
+      "offer": "[variables('offerToUse')]",
+      "publisher": "f5-networks",
+      "sku": "[variables('skuToUse')]",
+      "version": "[parameters('bigIpVersion')]"
+    },
+    "bigIpNicPortValue": "[variables('bigIpNicPortMap')['1'].Port]",
+    "bigIpMgmtPort": "[variables('bigIpVersionPortMap')[variables('bigIpNicPortValue')].Port]",
+    "instanceName": "[toLower(parameters('instanceName'))]",
+    "availabilitySetName": "[concat(variables('dnsLabel'), '-avset')]",
+    "virtualNetworkName": "[concat(variables('dnsLabel'), '-vnet')]",
+    "vnetId": "[resourceId('Microsoft.Network/virtualNetworks', variables('virtualNetworkName'))]",
+    "vnetAddressPrefix": "[concat(parameters('vnetAddressPrefix'),'.0.0/16')]",
+    "publicIPAddressType": "Static",
+    "mgmtPublicIPAddressName": "[concat(variables('dnsLabel'), '-mgmt-pip')]",
+    "mgmtPublicIPAddressId": "[resourceId('Microsoft.Network/publicIPAddresses', variables('mgmtPublicIPAddressName'))]",
+    "mgmtNsgID": "[resourceId('Microsoft.Network/networkSecurityGroups/',concat(variables('dnsLabel'),'-mgmt-nsg'))]",
+    "mgmtNicName": "[concat(variables('dnsLabel'), '-mgmt')]",
+    "mgmtNicID": "[resourceId('Microsoft.Network/NetworkInterfaces', variables('mgmtNicName'))]",
+    "mgmtSubnetName": "mgmt",
+    "mgmtSubnetId": "[concat(variables('vnetId'), '/subnets/', variables('mgmtSubnetName'))]",
+    "mgmtSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.1.0/24')]",
+    "mgmtSubnetPrivateAddress": "[concat(parameters('vnetAddressPrefix'), '.1.4')]",
+    "mgmtRouteGw": "[concat(parameters('vnetAddressPrefix'), '.1.1')]",
+    "tagValues": "[parameters('tagValues')]",
+    "newDataStorageAccountName": "[concat(uniqueString(variables('dnsLabel'), resourceGroup().id, deployment().name), 'data000')]",
+    "dataStorageAccountType": "Standard_LRS",
+    "deploymentId": "[concat(variables('subscriptionId'), resourceGroup().id, deployment().name, variables('dnsLabel'))]",
+    "allowUsageAnalytics": {
+      "No": {
+        "hashCmd": "echo AllowUsageAnalytics:No",
+        "metricsCmd": ""
+      },
+      "Yes": {
+        "hashCmd": "[concat('custId=`echo \"', variables('subscriptionId'), '\"|sha512sum|cut -d \" \" -f 1`; deployId=`echo \"', variables('deploymentId'), '\"|sha512sum|cut -d \" \" -f 1`')]",
+        "metricsCmd": "[concat(' --metrics customerId:${custId},deploymentId:${deployId},templateName:standalone_1nic-new-stack-supported,templateVersion:5.5.0.0,region:', variables('location'), ',bigIpVersion:', parameters('bigIpVersion') ,',licenseType:payg,cloudLibsVersion:', variables('f5CloudLibsTag'), ',cloudName:azure')]"
+      }
+    },
+    "customImage": "[replace(parameters('customImage'), 'OPTIONAL', '')]",
+    "useCustomImage": "[not(empty(variables('customImage')))]",
+    "createNewCustomImage": "[contains(variables('customImage'), 'https://')]",
+    "newCustomImageName": "[concat(variables('dnsLabel'), 'image')]",
+    "storageProfileArray": {
+      "customImage": {
+        "imageReference": {
+          "id": "[if(variables('createNewCustomImage'), resourceId('Microsoft.Compute/images', variables('newCustomImageName')), variables('customImage'))]"
+        }
+      },
+      "platformImage": {
+        "imageReference": "[variables('imageReference')]",
+        "osDisk": {
+          "createOption": "FromImage"
+        }
+      }
+    },
+    "premiumInstanceArray": [
+      "Standard_DS2",
+      "Standard_DS3",
+      "Standard_DS4",
+      "Standard_DS11",
+      "Standard_DS12",
+      "Standard_DS13",
+      "Standard_DS14",
+      "Standard_DS2_v2",
+      "Standard_DS3_v2",
+      "Standard_DS4_v2",
+      "Standard_DS5_v2",
+      "Standard_DS11_v2",
+      "Standard_DS12_v2",
+      "Standard_DS13_v2",
+      "Standard_DS14_v2",
+      "Standard_DS15_v2",
+      "Standard_F2S",
+      "Standard_F4S",
+      "Standard_F8S",
+      "Standard_F16S",
+      "Standard_GS2",
+      "Standard_GS3",
+      "Standard_GS4",
+      "Standard_GS5"
+    ],
+    "customConfig": "### START (INPUT) CUSTOM CONFIGURATION HERE\n",
+    "installCustomConfig": "[concat(variables('singleQuote'), '#!/bin/bash\n', variables('customConfig'), variables('singleQuote'))]",
+    "commandArgs": "[concat('-m ', parameters('applicationProtocols'), ' -d ', parameters('solutionDeploymentName'), ' -n ', parameters('applicationAddress'), ' -h ', parameters('applicationPort'), ' -t ', toLower(parameters('applicationType')), ' -l ', toLower(parameters('blockingLevel')), ' -a ', parameters('customPolicy'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPasswordOrKey'))]"
   },
   "resources": [
     {
-      "apiVersion": "[variables('apiVersionTemplate')]",
+      "apiVersion": "[variables('templateApiVersion')]",
       "name": "omsLinkedTemplate",
       "type": "Microsoft.Resources/deployments",
       "dependsOn": [
@@ -186,38 +515,23 @@
       }
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/publicIPAddresses",
-      "name": "[parameters('dnsLabel')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "location": "[variables('location')]",
-      "tags": {
-        "displayName": "PublicIPAddress",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
-      },
+      "name": "[variables('mgmtPublicIPAddressName')]",
       "properties": {
-        "publicIPAllocationMethod": "Dynamic",
         "dnsSettings": {
-          "domainNameLabel": "[parameters('dnsLabel')]"
-        }
-      }
+          "domainNameLabel": "[variables('dnsLabel')]"
+        },
+        "idleTimeoutInMinutes": 30,
+        "publicIPAllocationMethod": "[variables('publicIPAddressType')]"
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Network/publicIPAddresses"
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/virtualNetworks",
-      "name": "[variables('virtualNetworkName')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "location": "[variables('location')]",
-      "tags": {
-        "displayName": "VirtualNetwork",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
-      },
+      "name": "[variables('virtualNetworkName')]",
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
@@ -226,372 +540,214 @@
         },
         "subnets": [
           {
-            "name": "[variables('subnetName')]",
+            "name": "[variables('mgmtSubnetName')]",
             "properties": {
-              "addressPrefix": "[variables('subnetPrefix')]"
+              "addressPrefix": "[variables('mgmtSubnetPrefix')]"
             }
           }
         ]
-      }
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Network/virtualNetworks"
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkInterfaces",
-      "name": "[concat(variables('nicNamePrefix'),copyindex())]",
-      "location": "[variables('location')]",
-      "tags": {
-        "displayName": "NetworkInterface",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
-      },
+      "apiVersion": "[variables('networkApiVersion')]",
       "dependsOn": [
-        "[concat('Microsoft.Network/virtualNetworks/', variables('virtualNetworkName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'),'/inboundNatRules/guimgt',copyindex())]",
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'),'/inboundNatRules/sshmgt',copyindex())]",
-        "[concat('Microsoft.Network/networkSecurityGroups/', parameters('dnsLabel'),'-nsg')]"
+        "[variables('vnetId')]",
+        "[variables('mgmtPublicIPAddressId')]",
+        "[variables('mgmtNsgID')]"
       ],
-      "copy": {
-        "count": "[parameters('numberOfInstances')]",
-        "name": "niccopy"
-      },
+      "location": "[variables('location')]",
+      "name": "[variables('mgmtNicName')]",
       "properties": {
-        "networkSecurityGroup": {
-          "id": "[variables('nsgID')]"
-        },
         "ipConfigurations": [
           {
-            "name": "ipconfig1",
+            "name": "[concat(variables('instanceName'), '-ipconfig1')]",
             "properties": {
-              "privateIPAllocationMethod": "Static",
-              "privateIPAddress": "[concat(variables('ipAddress'),add(4,copyindex()))]",
-              "subnet": {
-                "id": "[variables('subnetRef')]"
+              "PublicIpAddress": {
+                "Id": "[variables('mgmtPublicIPAddressId')]"
               },
-              "loadBalancerBackendAddressPools": [
-                {
-                  "id": "[concat(variables('lbID'), '/backendAddressPools/', 'loadBalancerBackEnd')]"
-                }
-              ],
-              "loadBalancerInboundNatRules": [
-                {
-                  "id": "[concat(variables('lbID'), '/inboundNatRules/', 'guimgt',copyIndex())]"
-                },
-                {
-                  "id": "[concat(variables('lbID'), '/inboundNatRules/', 'sshmgt',copyIndex())]"
-                }
-              ]
+              "privateIPAddress": "[variables('mgmtSubnetPrivateAddress')]",
+              "privateIPAllocationMethod": "Static",
+              "subnet": {
+                "id": "[variables('mgmtSubnetId')]"
+              }
             }
           }
-        ]
-      }
+        ],
+        "networkSecurityGroup": {
+          "id": "[variables('mgmtNsgID')]"
+        }
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Network/networkInterfaces"
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/networkSecurityGroups",
-      "name": "[concat(parameters('dnsLabel'), '-nsg')]",
+      "apiVersion": "[variables('networkApiVersion')]",
       "location": "[variables('location')]",
-      "tags": {
-        "displayName": "NetworkSecurityGroup",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
-      },
+      "name": "[concat(variables('dnsLabel'), '-mgmt-nsg')]",
       "properties": {
         "securityRules": [
           {
-            "name": "mgmt_allow_443",
+            "name": "mgmt_allow_https",
             "properties": {
+              "access": "Allow",
               "description": "",
-              "priority": 101,
-              "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
-              "sourcePortRange": "*",
               "destinationAddressPrefix": "*",
-              "destinationPortRange": "443",
-              "protocol": "TCP",
+              "destinationPortRange": "[variables('bigIpMgmtPort')]",
               "direction": "Inbound",
-              "access": "Allow"
+              "priority": 101,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+              "sourcePortRange": "*"
             }
           },
           {
             "name": "ssh_allow_22",
             "properties": {
+              "access": "Allow",
               "description": "",
-              "priority": 102,
-              "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
-              "sourcePortRange": "*",
               "destinationAddressPrefix": "*",
               "destinationPortRange": "22",
-              "protocol": "TCP",
               "direction": "Inbound",
-              "access": "Allow"
-            }
-          },
-          {
-            "name": "app_allow_880",
-            "properties": {
-              "description": "",
-              "priority": 103,
-              "sourceAddressPrefix": "*",
-              "sourcePortRange": "*",
-              "destinationAddressPrefix": "*",
-              "destinationPortRange": "880",
-              "protocol": "TCP",
-              "direction": "Inbound",
-              "access": "Allow"
+              "priority": 102,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+              "sourcePortRange": "*"
             }
           }
         ]
-      }
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Network/networkSecurityGroups"
     },
     {
-      "apiVersion": "2015-06-15",
-      "dependsOn": [
-        "[concat('Microsoft.Network/publicIPAddresses/', parameters('dnsLabel'))]"
-      ],
+      "apiVersion": "[variables('computeApiVersion')]",
       "location": "[variables('location')]",
-      "tags": {
-        "displayName": "LoadBalancer",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
-      },
-      "name": "[variables('loadBalancerName')]",
-      "properties": {
-        "frontendIPConfigurations": [
-          {
-            "name": "loadBalancerFrontEnd",
-            "properties": {
-              "publicIPAddress": {
-                "id": "[variables('publicIPID')]"
-              }
-            }
-          }
-        ],
-        "backendAddressPools": [
-          {
-            "name": "loadBalancerBackEnd"
-          }
-        ],
-        "loadBalancingRules": [
-          {
-            "Name": "http-880",
-            "properties": {
-              "frontendIPConfiguration": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/frontendIpConfigurations/loadBalancerFrontEnd')]"
-              },
-              "backendAddressPool": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/backendAddressPools/loadBalancerBackEnd')]"
-              },
-              "probe": {
-                "id": "[concat(resourceId('Microsoft.Network/loadBalancers', variables('loadBalancerName')), '/probes/tcp-880')]"
-              },
-              "protocol": "Tcp",
-              "frontendPort": "[parameters('applicationPort')]",
-              "backendPort": 880,
-              "idleTimeoutInMinutes": 15
-            }
-          }
-        ],
-        "probes": [
-          {
-            "properties": {
-              "protocol": "Tcp",
-              "port": 880,
-              "intervalInSeconds": 15,
-              "numberOfProbes": 2
-            },
-            "name": "tcp-880"
-          }
-        ]
-      },
-      "type": "Microsoft.Network/loadBalancers"
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
-      "name": "[concat(variables('loadBalancerName'),'/guimgt', copyIndex())]",
-      "location": "[variables('location')]",
-      "copy": {
-        "name": "lbNatLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
-      ],
-      "properties": {
-        "frontendIPConfiguration": {
-          "id": "[variables('frontEndIPConfigID')]"
-        },
-        "protocol": "tcp",
-        "frontendPort": "[copyIndex(8443)]",
-        "backendPort": 443,
-        "enableFloatingIP": false
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Network/loadBalancers/inboundNatRules",
-      "name": "[concat(variables('loadBalancerName'),'/sshmgt', copyIndex())]",
-      "location": "[variables('location')]",
-      "copy": {
-        "name": "lbNatLoop",
-        "count": "[parameters('numberOfInstances')]"
-      },
-      "dependsOn": [
-        "[concat('Microsoft.Network/loadBalancers/', variables('loadBalancerName'))]"
-      ],
-      "properties": {
-        "frontendIPConfiguration": {
-          "id": "[variables('frontEndIPConfigID')]"
-        },
-        "protocol": "tcp",
-        "frontendPort": "[copyIndex(8022)]",
-        "backendPort": 22,
-        "enableFloatingIP": false
-      }
-    },
-    {
-      "apiVersion": "2015-06-15",
-      "location": "[variables('location')]",
-      "tags": {
-        "displayName": "AvailabilitySet",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
-      },
       "name": "[variables('availabilitySetName')]",
+      "properties": {
+        "PlatformFaultDomainCount": 2,
+        "PlatformUpdateDomainCount": 2
+      },
+      "sku": {
+        "name": "Aligned"
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
       "type": "Microsoft.Compute/availabilitySets"
     },
     {
-      "apiVersion": "2015-06-15",
-      "type": "Microsoft.Compute/virtualMachines",
-      "name": "[concat(variables('wafNamePrefix'),copyindex())]",
+      "apiVersion": "[variables('storageApiVersion')]",
+      "kind": "Storage",
       "location": "[variables('location')]",
-      "tags": {
-        "displayName": "VirtualMachine",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
+      "name": "[variables('newDataStorageAccountName')]",
+      "properties": {
+        "supportsHttpsTrafficOnly": true
       },
+      "sku": {
+        "name": "[variables('dataStorageAccountType')]",
+        "tier": "Standard"
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Storage/storageAccounts"
+    },
+    {
+      "apiVersion": "[variables('computeApiVersion')]",
+      "condition": "[and(variables('useCustomImage'), variables('createNewCustomImage'))]",
+      "location": "[variables('location')]",
+      "name": "[variables('newCustomImageName')]",
+      "properties": {
+        "storageProfile": {
+          "osDisk": {
+            "blobUri": "[variables('customImage')]",
+            "osState": "Generalized",
+            "osType": "Linux",
+            "storageAccountType": "[if(contains(variables('premiumInstanceArray'), parameters('instanceType')), 'Premium_LRS', 'Standard_LRS')]"
+          }
+        }
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Compute/images"
+    },
+    {
+      "apiVersion": "[variables('computeApiVersion')]",
       "dependsOn": [
-        "omsLinkedTemplate",
-        "[concat('Microsoft.Network/networkInterfaces/', variables('nicNamePrefix'), copyindex())]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('newDataStorageAccountName'))]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
-        "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
+        "[variables('newCustomImageName')]",
+        "[concat('Microsoft.Network/networkInterfaces/', variables('mgmtNicName'))]"
       ],
-      "copy": {
-        "count": "[parameters('numberOfInstances')]",
-        "name": "wafcopy"
-      },
-      "plan": {
-        "name": "f5-bigip-virtual-edition-1g-waf-hourly",
-        "publisher": "f5-networks",
-        "product": "f5-big-ip-advanced-waf"
-      },
+      "location": "[variables('location')]",
+      "name": "[variables('instanceName')]",
+      "plan": "[if(variables('useCustomImage'), json('null'), variables('imagePlan'))]",
       "properties": {
         "availabilitySet": {
           "id": "[resourceId('Microsoft.Compute/availabilitySets',variables('availabilitySetName'))]"
         },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(concat('Microsoft.Storage/storageAccounts/', variables('newDataStorageAccountName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).primaryEndpoints.blob]"
+          }
+        },
         "hardwareProfile": {
           "vmSize": "[parameters('instanceType')]"
-        },
-        "osProfile": {
-          "computerName": "[concat(variables('wafNamePrefix'),copyindex())]",
-          "adminUsername": "[parameters('adminUsername')]",
-          "adminPassword": "[parameters('adminPassword')]"
-        },
-        "storageProfile": {
-          "imageReference": {
-            "publisher": "f5-networks",
-            "offer": "f5-big-ip-advanced-waf",
-            "sku": "f5-bigip-virtual-edition-1g-waf-hourly",
-            "version": "14.0.001000"
-          },
-          "osDisk": {
-            "name": "[concat('osdisk',copyindex())]",
-            "vhd": {
-              "uri": "[concat('http://',variables('newStorageAccountName'),'.blob.core.windows.net/',variables('newStorageAccountName'),'/osDisk',copyindex(),'.vhd')]"
-            },
-            "caching": "ReadWrite",
-            "createOption": "FromImage"
-          }
         },
         "networkProfile": {
           "networkInterfaces": [
             {
-              "id": "[concat(resourceId('Microsoft.Network/networkInterfaces',variables('nicNamePrefix')),copyindex())]"
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('mgmtNicName'))]",
+              "properties": {
+                "primary": true
+              }
             }
           ]
         },
-        "diagnosticsProfile": {
-          "bootDiagnostics": {
-            "enabled": true,
-            "storageUri": "[concat('http://',variables('newstorageAccountName'),'.blob.core.windows.net')]"
-          }
-        }
-      }
-    },
-    {
-      "name": "[variables('newStorageAccountName')]",
-      "type": "Microsoft.Storage/storageAccounts",
-      "location": "[variables('location')]",
-      "tags": {
-        "displayName": "StorageAccount",
-        "application": "[parameters('tagValues').application]",
-        "environment": "[parameters('tagValues').environment]",
-        "group": "[parameters('tagValues').group]",
-        "owner": "[parameters('tagValues').owner]",
-        "costCenter": "[parameters('tagValues').cost]"
+        "osProfile": {
+          "adminPassword": "[variables('adminPasswordOrKey')]",
+          "adminUsername": "[parameters('adminUsername')]",
+          "computerName": "[variables('instanceName')]",
+          "linuxConfiguration": "[if(equals(parameters('authenticationType'), 'password'), json('null'), variables('linuxConfiguration'))]"
+        },
+        "storageProfile": "[if(variables('useCustomImage'), variables('storageProfileArray').customImage, variables('storageProfileArray').platformImage)]"
       },
-      "apiVersion": "2015-06-15",
-      "properties": {
-        "accountType": "Standard_LRS"
-      }
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Compute/virtualMachines"
     },
     {
-      "type": "Microsoft.Compute/virtualMachines/extensions",
-      "name": "[concat(variables('wafNamePrefix'),0,'/start')]",
-      "apiVersion": "2016-03-30",
-      "location": "[variables('location')]",
+      "apiVersion": "[variables('computeApiVersion')]",
       "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/',variables('wafNamePrefix'),0)]"
+        "[concat('Microsoft.Compute/virtualMachines/', variables('instanceName'))]"
       ],
+      "location": "[variables('location')]",
+      "name": "[concat(variables('instanceName'),'/start')]",
       "properties": {
+        "protectedSettings": {
+          "commandToExecute": "[concat('function cp_logs() { cd /var/lib/waagent/custom-script/download && cp `ls -r | head -1`/std* /var/log/cloud/azure; cd /var/log/cloud/azure && cat stdout stderr > install.log; }; CLOUD_LIB_DIR=/config/cloud/azure/node_modules/@f5devcentral; mkdir -p $CLOUD_LIB_DIR && cp f5-cloud-libs.tar.gz* /config/cloud; mkdir -p /var/log/cloud/azure;/usr/bin/install -m 400 /dev/null /config/cloud/.passwd; /usr/bin/install -b -m 755 /dev/null /config/verifyHash; /usr/bin/install -b -m 755 /dev/null /config/installCloudLibs.sh; IFS=', variables('singleQuote'), '%', variables('singleQuote'), '; echo -e ', variables('verifyHash'), ' >> /config/verifyHash; echo -e ', variables('installCloudLibs'), ' >> /config/installCloudLibs.sh; echo -e ', variables('installCustomConfig'), ' >> /config/customConfig.sh; unset IFS; bash /config/installCloudLibs.sh; source $CLOUD_LIB_DIR/f5-cloud-libs/scripts/util.sh; encrypt_secret ', variables('singleQuote'), variables('adminPasswordOrKey'), variables('singleQuote'), ' \"/config/cloud/.passwd\" true; $CLOUD_LIB_DIR/f5-cloud-libs/scripts/createUser.sh --user svc_user --password-file /config/cloud/.passwd --password-encrypted;', variables('allowUsageAnalytics')[parameters('allowUsageAnalytics')].hashCmd, '; /usr/bin/f5-rest-node $CLOUD_LIB_DIR/f5-cloud-libs/scripts/onboard.js --output /var/log/cloud/azure/onboard.log --signal ONBOARD_DONE --log-level info --cloud azure --host ', variables('mgmtSubnetPrivateAddress'), ' --port ', variables('bigIpMgmtPort'), ' -u svc_user --password-url file:///config/cloud/.passwd --password-encrypted --hostname ', concat(variables('instanceName'), '.', variables('location'), '.cloudapp.azure.com'),  ' --ntp ', parameters('ntpServer'), ' --tz ', parameters('timeZone'), ' --db tmm.maxremoteloglength:2048', variables('allowUsageAnalytics')[parameters('allowUsageAnalytics')].metricsCmd, ' --module asm:nominal --module ltm:nominal', '; if [[ $? == 0 ]]; then tmsh load sys application template f5.service_discovery.tmpl; tmsh load sys application template f5.cloud_logger.v1.0.0.tmpl; /usr/bin/f5-rest-node $CLOUD_LIB_DIR/f5-cloud-libs/scripts/runScript.js --wait-for ONBOARD_DONE --output /var/log/cloud/azure/runScript.log --log-level debug --file /var/lib/waagent/custom-script/download/0/deploy_waf.sh --cl-args ', variables('singleQuote'), variables('commandArgs'), variables('singleQuote'), '; bash /config/customConfig.sh; $(cp_logs); else $(cp_logs); exit 1; fi', '; if grep -i \"PUT failed\" /var/log/waagent.log -q; then echo \"Killing waagent exthandler, daemon should restart it\"; pkill -f \"python -u /usr/sbin/waagent -run-exthandlers\"; fi')]"
+        },
         "publisher": "Microsoft.Azure.Extensions",
-        "type": "CustomScript",
-        "typeHandlerVersion": "2.0",
         "settings": {
           "fileUris": [
-            "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-libs/', variables('f5CloudLibsTag'), '/scripts/azure/runScripts.js')]",
-            "[concat('https://api.github.com/repos/F5Networks/f5-cloud-libs/tarball/', variables('f5CloudLibsTag'))]"
+            "[variables('scriptLoc')]",
+            "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-libs/', variables('f5CloudLibsTag'), '/dist/f5-cloud-libs.tar.gz')]",
+            "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-iapps/', variables('f5CloudIappsTag'), '/f5-service-discovery/f5.service_discovery.tmpl')]",
+            "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-iapps/', variables('f5CloudIappsTag'), '/f5-cloud-logger/f5.cloud_logger.v1.0.0.tmpl')]"
           ]
         },
-        "protectedSettings": {
-          "commandToExecute": "[concat('f5-rest-node ./runScripts.js --log-level debug --tag ', variables('f5CloudLibsTag'), ' --onboard \" --output /var/log/onboard.log --log-level debug --host ', concat(variables('ipAddress'), 4), ' -u admin -p ', parameters('adminPassword'), ' --hostname ', concat(variables('wafNamePrefix'), 0, '.azuresecurity.com'), ' --update-user user:admin,password:', parameters('adminPassword'), ' --db provision.1nicautoconfig:disable --db tmm.maxremoteloglength:2048 --module ltm:nominal --module asm:nominal --module afm:none --update-sigs --signal ONBOARD_DONE \" --script \" --wait-for ONBOARD_DONE --output /var/log/runScript.log --log-level debug --url https://github.com/gregcoward/AzureOMSWorkspaceIntegration/blob/master/deploy_waf_logger.sh --cl-args ', variables('singleQuote'), variables('commandArgs'), ' -w ', reference('omsLinkedTemplate').outputs.workspaceId.value, ' -k ', reference('omsLinkedTemplate').outputs.workspaceToken.value, variables('singleQuote'), '\"')]"
-        }
-      }
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0"
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "type": "Microsoft.Compute/virtualMachines/extensions"
     }
   ],
   "outputs": {
     "GUI-URL": {
       "type": "string",
-      "value": "[concat('https://',reference(variables('publicIPID')).dnsSettings.fqdn,':8443')]"
+      "value": "[concat('https://', reference(variables('mgmtPublicIPAddressId')).dnsSettings.fqdn, ':', variables('bigIpMgmtPort'))]"
     },
     "SSH-URL": {
       "type": "string",
-      "value": "[concat(reference(variables('publicIPID')).dnsSettings.fqdn,' ',8022)]"
+      "value": "[concat(reference(variables('mgmtPublicIPAddressId')).dnsSettings.fqdn, ' ',22)]"
     }
   }
 }
