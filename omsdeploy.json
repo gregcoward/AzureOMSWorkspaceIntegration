@@ -1,0 +1,172 @@
+{
+  "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "dashboardName": {
+      "type": "string",
+      "defaultValue": "F5AdvWAFDashboard"
+    }
+  },
+  "variables": {
+    "mlVersion": "2017-03-15-preview",
+    "workspaceName": "[concat('f5oms', substring(uniqueString(resourceGroup().id),0,6))]",
+    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.OperationalInsights/workspaces",
+      "name": "[variables('workspaceName')]",
+      "apiVersion": "2017-03-15-preview",
+      "location": "[resourceGroup().location]",
+      "properties": {
+        "sku": {
+          "Name": "PerNode"
+        },
+        "features": {
+          "searchVersion": 1
+        }
+      }
+    },
+    {
+      "name": "[parameters('dashboardName')]",
+      "type": "Microsoft.Portal/dashboards",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01-preview",
+      "dependsOn": [
+        "[variables('workspaceName')]"
+      ],
+      "tags": {
+        "hidden-title": "[parameters('dashboardName')]"
+      },
+      "properties": {
+        "lenses": {
+          "0": {
+            "order": 0,
+            "parts": {
+              "0": {
+                "position": {
+                  "x": 0,
+                  "y": 0,
+                  "colSpan": 7,
+                  "rowSpan": 5
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[subscription().subscriptionId]",
+                        "ResourceGroup": "[resourceGroup().name]",
+                        "Name": "[variables('workspaceName')]",
+                        "ResourceId": "[variables('workspaceId')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)\n| render timechart\n"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Event DateTime",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "events_count",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "Type of Attack",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
+                  "settings": {},
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              },
+              "1": {
+                "position": {
+                  "x": 7,
+                  "y": 0,
+                  "colSpan": 7,
+                  "rowSpan": 5
+                },
+                "metadata": {
+                  "inputs": [
+                    {
+                      "name": "ComponentId",
+                      "value": {
+                        "SubscriptionId": "[subscription().subscriptionId]",
+                        "ResourceGroup": "[resourceGroup().name]",
+                        "Name": "[variables('workspaceName')]",
+                        "ResourceId": "[variables('workspaceId')]"
+                      }
+                    },
+                    {
+                      "name": "Query",
+                      "value": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 1w)\n| render barchart \n"
+                    },
+                    {
+                      "name": "TimeRange",
+                      "value": "P1D"
+                    },
+                    {
+                      "name": "Dimensions",
+                      "value": {
+                        "xAxis": {
+                          "name": "Event DateTime",
+                          "type": "DateTime"
+                        },
+                        "yAxis": [
+                          {
+                            "name": "count_",
+                            "type": "Int64"
+                          }
+                        ],
+                        "splitBy": [
+                          {
+                            "name": "Violations",
+                            "type": "String"
+                          }
+                        ],
+                        "aggregation": "Sum"
+                      }
+                    }
+                  ],
+                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
+                  "settings": {},
+                  "asset": {
+                    "idInputName": "ComponentId",
+                    "type": "ApplicationInsights"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "workspaceToken": {
+      "type": "string",
+      "value": "[listKeys(variables('workspaceId'),'2015-11-01-preview').primarySharedKey]"
+    },
+    "workspaceId": {
+      "type": "string",
+      "value": "[variables('workspaceId')]"
+    }
+  }
+}

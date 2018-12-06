@@ -137,11 +137,13 @@
     }
   },
   "variables": {
-    "workspaceName": "[concat('f5oms', substring(uniqueString(resourceGroup().id),0,6))]",
-    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]",
-    "workspaceKey": "[listKeys(variables('workspaceId'),'2015-11-01-preview').primarySharedKey]",
-    "dashboardName": "F5AdvanceWafDashboard",
+    "baseUrl": "https://raw.githubusercontent.com/gregcoward/AzureOMSWorkspaceIntegration/master",
+    "omsTemplateLink": "[concat(variables('baseUrl'), '/omsdeploy.json')]",
     "f5CloudLibsTag": "develop",
+    "apiVersionCompute": "2016-03-30",
+    "apiVersionNetwork": "2015-06-15",
+    "apiVersionStorage": "2015-06-15",
+    "apiVersionTemplate": "2015-01-01",
     "location": "[resourceGroup().location]",
     "instanceThroughputToLower": "[toLower(parameters('instanceThroughput'))]",
     "skuToUse": "[concat('f5-bigip-virtual-edition-', variables('instanceThroughputToLower'),'-best-hourly')]",
@@ -164,152 +166,22 @@
     "vnetID": "[resourceId('Microsoft.Network/virtualNetworks',variables('virtualNetworkName'))]",
     "subnetRef": "[concat(variables('vnetID'),'/subnets/',variables('subnetName'))]",
     "singleQuote": "'",
-    "commandArgs": "[concat('-m ', parameters('applicationProtocols'), ' -d ', parameters('solutionDeploymentName'), ' -n ', parameters('applicationAddress'), ' -h ', parameters('applicationPort'), ' -t ', toLower(parameters('applicationType')), ' -l ', toLower(parameters('blockingLevel')), ' -a ', parameters('customPolicy'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'), ' -w ', variables('workspaceId'), ' -k ', variables('workspaceKey'))]"
+    "commandArgs": "[concat('-m ', parameters('applicationProtocols'), ' -d ', parameters('solutionDeploymentName'), ' -n ', parameters('applicationAddress'), ' -h ', parameters('applicationPort'), ' -t ', toLower(parameters('applicationType')), ' -l ', toLower(parameters('blockingLevel')), ' -a ', parameters('customPolicy'), ' -u ', parameters('adminUsername'), ' -p ', parameters('adminPassword'))]"
   },
   "resources": [
     {
-      "type": "Microsoft.OperationalInsights/workspaces",
-      "name": "[variables('workspaceName')]",
-      "apiVersion": "2017-03-15-preview",
-      "location": "[resourceGroup().location]",
-      "properties": {
-        "sku": {
-          "Name": "PerNode"
-        },
-        "features": {
-          "searchVersion": 1
-        }
-      }
-    },
-    {
-      "name": "[variables('dashboardName')]",
-      "type": "Microsoft.Portal/dashboards",
-      "location": "[resourceGroup().location]",
-      "apiVersion": "2015-08-01-preview",
+      "apiVersion": "[variables('apiVersionTemplate')]",
+      "name": "omsLinkedTemplate",
+      "type": "Microsoft.Resources/deployments",
       "dependsOn": [
-        "[variables('workspaceName')]",
-        "[concat(variables('wafNamePrefix'),0,'/start')]"
       ],
-      "tags": {
-        "hidden-title": "[variables('dashboardName')]"
-      },
       "properties": {
-        "lenses": {
-          "0": {
-            "order": 0,
-            "parts": {
-              "0": {
-                "position": {
-                  "x": 0,
-                  "y": 0,
-                  "colSpan": 7,
-                  "rowSpan": 5
-                },
-                "metadata": {
-                  "inputs": [
-                    {
-                      "name": "ComponentId",
-                      "value": {
-                        "SubscriptionId": "[subscription().subscriptionId]",
-                        "ResourceGroup": "[resourceGroup().name]",
-                        "Name": "[variables('workspaceName')]",
-                        "ResourceId": "[variables('workspaceId')]"
-                      }
-                    },
-                    {
-                      "name": "Query",
-                      "value": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)\n| render timechart\n"
-                    },
-                    {
-                      "name": "Dimensions",
-                      "value": {
-                        "xAxis": {
-                          "name": "Event DateTime",
-                          "type": "DateTime"
-                        },
-                        "yAxis": [
-                          {
-                            "name": "events_count",
-                            "type": "Int64"
-                          }
-                        ],
-                        "splitBy": [
-                          {
-                            "name": "Type of Attack",
-                            "type": "String"
-                          }
-                        ],
-                        "aggregation": "Sum"
-                      }
-                    }
-                  ],
-                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
-                  "settings": {},
-                  "asset": {
-                    "idInputName": "ComponentId",
-                    "type": "ApplicationInsights"
-                  }
-                }
-              },
-              "1": {
-                "position": {
-                  "x": 7,
-                  "y": 0,
-                  "colSpan": 7,
-                  "rowSpan": 5
-                },
-                "metadata": {
-                  "inputs": [
-                    {
-                      "name": "ComponentId",
-                      "value": {
-                        "SubscriptionId": "[subscription().subscriptionId]",
-                        "ResourceGroup": "[resourceGroup().name]",
-                        "Name": "[variables('workspaceName')]",
-                        "ResourceId": "[variables('workspaceId')]"
-                      }
-                    },
-                    {
-                      "name": "Query",
-                      "value": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 1w)\n| render barchart \n"
-                    },
-                    {
-                      "name": "TimeRange",
-                      "value": "P1D"
-                    },
-                    {
-                      "name": "Dimensions",
-                      "value": {
-                        "xAxis": {
-                          "name": "Event DateTime",
-                          "type": "DateTime"
-                        },
-                        "yAxis": [
-                          {
-                            "name": "count_",
-                            "type": "Int64"
-                          }
-                        ],
-                        "splitBy": [
-                          {
-                            "name": "Violations",
-                            "type": "String"
-                          }
-                        ],
-                        "aggregation": "Sum"
-                      }
-                    }
-                  ],
-                  "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
-                  "settings": {},
-                  "asset": {
-                    "idInputName": "ComponentId",
-                    "type": "ApplicationInsights"
-                  }
-                }
-              }
-            }
-          }
+        "mode": "incremental",
+        "templateLink": {
+          "uri": "[variables('omsTemplateLink')]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
         }
       }
     },
@@ -614,7 +486,7 @@
         "costCenter": "[parameters('tagValues').cost]"
       },
       "dependsOn": [
-        "[variables('workspaceName')]",
+        "omsLinkedTemplate",
         "[concat('Microsoft.Network/networkInterfaces/', variables('nicNamePrefix'), copyindex())]",
         "[concat('Microsoft.Compute/availabilitySets/', variables('availabilitySetName'))]",
         "[concat('Microsoft.Storage/storageAccounts/', variables('newStorageAccountName'))]"
@@ -707,7 +579,7 @@
           ]
         },
         "protectedSettings": {
-          "commandToExecute": "[concat('f5-rest-node ./runScripts.js --log-level debug --tag ', variables('f5CloudLibsTag'), ' --onboard \" --output /var/log/onboard.log --log-level debug --host ', concat(variables('ipAddress'), 4), ' -u admin -p ', parameters('adminPassword'), ' --hostname ', concat(variables('wafNamePrefix'), 0, '.azuresecurity.com'), ' --update-user user:admin,password:', parameters('adminPassword'), ' --db provision.1nicautoconfig:disable --db tmm.maxremoteloglength:2048 --module ltm:nominal --module asm:nominal --module afm:none --update-sigs --signal ONBOARD_DONE \" --script \" --wait-for ONBOARD_DONE --output /var/log/runScript.log --log-level debug --url https://github.com/gregcoward/AzureOMSWorkspaceIntegration/blob/master/deploy_waf_logger.sh --cl-args ', variables('singleQuote'), variables('commandArgs'), variables('singleQuote'), '\"')]"
+          "commandToExecute": "[concat('f5-rest-node ./runScripts.js --log-level debug --tag ', variables('f5CloudLibsTag'), ' --onboard \" --output /var/log/onboard.log --log-level debug --host ', concat(variables('ipAddress'), 4), ' -u admin -p ', parameters('adminPassword'), ' --hostname ', concat(variables('wafNamePrefix'), 0, '.azuresecurity.com'), ' --update-user user:admin,password:', parameters('adminPassword'), ' --db provision.1nicautoconfig:disable --db tmm.maxremoteloglength:2048 --module ltm:nominal --module asm:nominal --module afm:none --update-sigs --signal ONBOARD_DONE \" --script \" --wait-for ONBOARD_DONE --output /var/log/runScript.log --log-level debug --url https://github.com/gregcoward/AzureOMSWorkspaceIntegration/blob/master/deploy_waf_logger.sh --cl-args ', variables('singleQuote'), variables('commandArgs'), ' -w ', reference('omsLinkedTemplate').outputs.workspaceId.value, ' -k ', reference('omsLinkedTemplate').outputs.workspaceToken.value, variables('singleQuote'), '\"')]"
         }
       }
     }
