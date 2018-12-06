@@ -166,7 +166,7 @@
     },
     "workspaceId": {
       "type": "string",
-      "value": "[variables('workspaceId')]"
+      "value": "[reference(variables('workspaceId'),'2015-11-01-preview').CustomerId]"
     }
   }
 }
