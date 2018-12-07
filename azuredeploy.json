@@ -638,7 +638,6 @@
         "publisher": "Microsoft.Azure.Extensions",
         "settings": {
           "fileUris": [
-            "[variables('scriptLoc')]",
             "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-libs/', variables('f5CloudLibsTag'), '/dist/f5-cloud-libs.tar.gz')]",
             "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-iapps/', variables('f5CloudIappsTag'), '/f5-service-discovery/f5.service_discovery.tmpl')]",
             "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-iapps/', variables('f5CloudIappsTag'), '/f5-cloud-logger/f5.cloud_logger.v1.0.0.tmpl')]"
@@ -664,11 +663,8 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
-          "workspaceId": {
-            "value": "[reference('omsLinkedTemplate').outputs.workspaceId.value"
-          },
           "workspaceName": {
-            "value": "[reference('omsLinkedTemplate').outputs.workspaceName.value"
+            "value": "[reference('omsLinkedTemplate').outputs.workspaceName.value]"
           }
         }
       }
