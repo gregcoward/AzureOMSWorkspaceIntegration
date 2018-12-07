@@ -25,6 +25,10 @@
     }
   ],
   "outputs": {
+    "workspaceName": {
+      "type": "string",
+      "value": "[variables('workspaceName')]"
+    },
     "workspaceToken": {
       "type": "string",
       "value": "[listKeys(variables('workspaceId'),'2015-11-01-preview').primarySharedKey]"

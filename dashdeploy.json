@@ -6,16 +6,12 @@
       "type": "string",
       "defaultValue": "F5AdvWAFDashboard"
     },
-    "workspaceId": {
-      "type": "string"
-    },
     "workspaceName": {
       "type": "string"
     }
   },
   "variables": {
     "mlVersion": "2017-03-15-preview",
-    "workspaceName": "[concat('f5oms', substring(uniqueString(resourceGroup().id),0,6))]",
     "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
   },
   "resources": [
@@ -50,7 +46,7 @@
                         "SubscriptionId": "[subscription().subscriptionId]",
                         "ResourceGroup": "[resourceGroup().name]",
                         "Name": "[parameters('workspaceName')]",
-                        "ResourceId": "[parameters('workspaceId')]"
+                        "ResourceId": "[variables('workspaceId')]"
                       }
                     },
                     {
@@ -103,7 +99,7 @@
                         "SubscriptionId": "[subscription().subscriptionId]",
                         "ResourceGroup": "[resourceGroup().name]",
                         "Name": "[parameters('workspaceName')]",
-                        "ResourceId": "[parameters('workspaceId')]"
+                        "ResourceId": "[variables('workspaceId')]"
                       }
                     },
                     {
