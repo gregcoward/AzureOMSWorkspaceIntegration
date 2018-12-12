@@ -38,7 +38,7 @@
             "Category": "F5 Custom Logs",
             "ETag": "*",
             "DisplayName": "Violations",
-            "Query": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 1w)\n| render barchart \n",
+            "Query": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 1d)\n| render barchart \n",
             "Version": 1
           }
         },
