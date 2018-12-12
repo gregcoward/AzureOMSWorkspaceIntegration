@@ -67,7 +67,7 @@
             "[concat('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
           ],
           "properties": {
-            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
           },
           "plan": {
             "name": "[variables('Updates').Name]",
