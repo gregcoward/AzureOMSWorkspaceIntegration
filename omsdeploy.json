@@ -38,7 +38,7 @@
             "Category": "F5 Custom Logs",
             "ETag": "*",
             "DisplayName": "Violations",
-            "Query": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 1d)\n| render barchart \n",
+            "Query": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 30m)\n| render barchart \n",
             "Version": 1
           }
         },
@@ -53,7 +53,7 @@
             "Category": "F5 Custom Logs",
             "ETag": "*",
             "DisplayName": "Attacks by Type",
-            "Query": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)\n| render piechart \n",
+            "Query": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 30m)\n| render piechart \n",
             "Version": 1
           }
         },
