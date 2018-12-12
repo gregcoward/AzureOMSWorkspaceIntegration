@@ -53,7 +53,7 @@
             "Category": "F5 Custom Logs",
             "ETag": "*",
             "DisplayName": "Attacks by Type",
-            "Query": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)",
+            "Query": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)\n| render piechart \n",
             "Version": 1
           }
         },
