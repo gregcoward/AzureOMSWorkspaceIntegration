@@ -742,26 +742,6 @@
       },
       "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
       "type": "Microsoft.Compute/virtualMachines/extensions"
-    },
-    {
-      "apiVersion": "[variables('templateApiVersion')]",
-      "name": "dashLinkedTemplate",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('instanceName'),'/extensions/start')]"
-      ],
-      "properties": {
-        "mode": "incremental",
-        "templateLink": {
-          "uri": "[variables('dashTemplateLink')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "workspaceName": {
-            "value": "[reference('omsLinkedTemplate').outputs.workspaceName.value]"
-          }
-        }
-      }
     }
   ],
   "outputs": {
