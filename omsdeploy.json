@@ -6,7 +6,11 @@
   "variables": {
     "mlVersion": "2017-03-15-preview",
     "workspaceName": "[concat('f5oms', substring(uniqueString(resourceGroup().id),0,6))]",
-    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
+    "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]",
+    "Updates": {
+      "Name": "[Concat('Updates', '(', variables('workspaceName'), ')')]",
+      "GalleryName": "Updates"
+    }
   },
   "resources": [
     {
@@ -21,7 +25,58 @@
         "features": {
           "searchVersion": 1
         }
-      }
+      },
+      "resources": [
+        {
+          "apiVersion": "2017-03-15-preview",
+          "name": "F5 Custom Log Query1",
+          "type": "savedSearches",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
+          ],
+          "properties": {
+            "Category": "F5 Custom Logs",
+            "ETag": "*",
+            "DisplayName": "Violations",
+            "Query": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 1w)\n| render barchart \n",
+            "Version": 1
+          }
+        },
+        {
+          "apiVersion": "2017-03-15-preview",
+          "name": "F5 Custom Log Query2",
+          "type": "savedSearches",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
+          ],
+          "properties": {
+            "Category": "F5 Custom Logs",
+            "ETag": "*",
+            "DisplayName": "Attacks by Type",
+            "Query": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)",
+            "Version": 1
+          }
+        },
+        {
+          "apiVersion": "2015-11-01-preview",
+          "location": "[parameters('location')]",
+          "name": "[variables('Updates').Name]",
+          "type": "Microsoft.OperationsManagement/solutions",
+          "id": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationsManagement/solutions/', variables('Updates').Name)]",
+          "dependsOn": [
+            "[concat('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]"
+          ],
+          "properties": {
+            "workspaceResourceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]"
+          },
+          "plan": {
+            "name": "[variables('Updates').Name]",
+            "publisher": "Microsoft",
+            "product": "[Concat('OMSGallery/', variables('Updates').GalleryName)]",
+            "promotionCode": ""
+          }
+        }
+      ]
     }
   ],
   "outputs": {
