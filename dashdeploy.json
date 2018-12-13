@@ -83,20 +83,20 @@
               },
               "1": {
                 "position": {
-                  "x": 7,
+                  "x": 9,
                   "y": 0,
-                  "colSpan": 7,
-                  "rowSpan": 5
+                  "colSpan": 8,
+                  "rowSpan": 6
                 },
                 "metadata": {
                   "inputs": [
                     {
                       "name": "ComponentId",
                       "value": {
-                        "SubscriptionId": "2c21b548-88aa-459e-813f-056d0d2ec8a7",
-                        "ResourceGroup": "test2",
-                        "Name": "f5oms4eqz4o",
-                        "ResourceId": "/subscriptions/2c21b548-88aa-459e-813f-056d0d2ec8a7/resourcegroups/test2/providers/microsoft.operationalinsights/workspaces/f5oms4eqz4o"
+                        "SubscriptionId": "[subscription().subscriptionId]",
+                        "ResourceGroup": "[resourceGroup().name]",
+                        "Name": "[parameters('workspaceName')]",
+                        "ResourceId": "[variables('workspaceId')]"
                       }
                     },
                     {
