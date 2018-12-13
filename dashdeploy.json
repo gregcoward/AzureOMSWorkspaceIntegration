@@ -32,8 +32,8 @@
                 "position": {
                   "x": 0,
                   "y": 0,
-                  "colSpan": 7,
-                  "rowSpan": 5
+                  "colSpan": 8,
+                  "rowSpan": 6
                 },
                 "metadata": {
                   "inputs": [
@@ -48,7 +48,7 @@
                     },
                     {
                       "name": "Query",
-                      "value": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 5m)\n| render timechart\n"
+                      "value": "F5CustomLog_CL \n| where TimeGenerated > ago(1d) and isnotempty(attack_type_s)\n| summarize events_count=count() by attack_type_s,  bin(TimeGenerated, 30m)\n| render piechart \n"
                     },
                     {
                       "name": "Dimensions",
@@ -93,15 +93,15 @@
                     {
                       "name": "ComponentId",
                       "value": {
-                        "SubscriptionId": "[subscription().subscriptionId]",
-                        "ResourceGroup": "[resourceGroup().name]",
-                        "Name": "[parameters('workspaceName')]",
-                        "ResourceId": "[variables('workspaceId')]"
+                        "SubscriptionId": "2c21b548-88aa-459e-813f-056d0d2ec8a7",
+                        "ResourceGroup": "test2",
+                        "Name": "f5oms4eqz4o",
+                        "ResourceId": "/subscriptions/2c21b548-88aa-459e-813f-056d0d2ec8a7/resourcegroups/test2/providers/microsoft.operationalinsights/workspaces/f5oms4eqz4o"
                       }
                     },
                     {
                       "name": "Query",
-                      "value": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 1w)\n| render barchart \n"
+                      "value": "F5CustomLog_CL \n| where isnotempty(violations_s)\n| summarize count() by violations_s, bin(TimeGenerated, 30m)\n| render barchart \n"
                     },
                     {
                       "name": "TimeRange",
@@ -111,7 +111,7 @@
                       "name": "Dimensions",
                       "value": {
                         "xAxis": {
-                          "name": "Event DateTime",
+                          "name": "TimeGenerated",
                           "type": "DateTime"
                         },
                         "yAxis": [
@@ -122,12 +122,28 @@
                         ],
                         "splitBy": [
                           {
-                            "name": "Violations",
+                            "name": "violations",
                             "type": "String"
                           }
                         ],
                         "aggregation": "Sum"
                       }
+                    },
+                    {
+                      "name": "Version",
+                      "value": "1.0"
+                    },
+                    {
+                      "name": "resourceTypeMode",
+                      "value": "workspace"
+                    },
+                    {
+                      "name": "ControlType",
+                      "value": "AnalyticsChart"
+                    },
+                    {
+                      "name": "SpecificChart",
+                      "value": "Bar"
                     }
                   ],
                   "type": "Extension/AppInsightsExtension/PartType/AnalyticsPart",
