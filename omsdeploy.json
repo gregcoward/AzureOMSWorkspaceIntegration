@@ -83,7 +83,7 @@
       ]
     },
     {
-      "name": "[parameters('dashboardName')]",
+      "name": "[variables('dashboardName')]",
       "type": "Microsoft.Portal/dashboards",
       "location": "[resourceGroup().location]",
       "apiVersion": "2015-08-01-preview",
