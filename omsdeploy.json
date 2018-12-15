@@ -9,7 +9,7 @@
   "variables": {
     "mlVersion": "2017-03-15-preview",
     "workspaceName": "[concat(parameters('dnsLabel'), substring(uniqueString(resourceGroup().id),0,6))]",
-    "dashboardName": "[concat(parameters('dnsLabel'), ' - Dashboard')]",
+    "dashboardName": "[concat(parameters('dnsLabel'), '-Dashboard')]",
     "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]",
     "Updates": {
       "Name": "[Concat('Updates', '(', variables('workspaceName'), ')')]",
