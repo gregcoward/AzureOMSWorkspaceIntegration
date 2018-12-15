@@ -34,7 +34,7 @@
       "type": "string"
     },
     "instanceName": {
-      "defaultValue": "f5vm",
+      "defaultValue": "f5bigip",
       "metadata": {
         "description": "Name of the Virtual Machine."
       },
@@ -136,7 +136,7 @@
         "12.1.303000",
         "latest"
       ],
-      "defaultValue": "13.1.100000",
+      "defaultValue": "latest",
       "metadata": {
         "description": "F5 BIG-IP version you want to use."
       },
