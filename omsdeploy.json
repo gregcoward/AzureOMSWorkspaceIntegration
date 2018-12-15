@@ -2,10 +2,14 @@
   "$schema": "http://schema.management.azure.com/schemas/2014-04-01-preview/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
+    "dnsLabel": {
+      "type": "string"
+    }
   },
   "variables": {
     "mlVersion": "2017-03-15-preview",
-    "workspaceName": "[concat('f5oms', substring(uniqueString(resourceGroup().id),0,6))]",
+    "workspaceName": "[concat(parameters('dnsLabel'), substring(uniqueString(resourceGroup().id),0,6))]",
+    "dashboardName": "[concat(parameters('dnsLabel'), ' - Dashboard']",
     "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces/', variables('workspaceName'))]",
     "Updates": {
       "Name": "[Concat('Updates', '(', variables('workspaceName'), ')')]",
@@ -77,12 +81,34 @@
           }
         }
       ]
+    },
+    {
+      "name": "[parameters('dashboardName')]",
+      "type": "Microsoft.Portal/dashboards",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01-preview",
+      "tags": {
+        "hidden-title": "[variables('dashboardName')]"
+      },
+      "properties": {
+        "lenses": {
+          "0": {
+            "order": 0,
+            "parts": {
+            }
+          }
+        }
+      }
     }
   ],
   "outputs": {
     "workspaceName": {
       "type": "string",
       "value": "[variables('workspaceName')]"
+    },
+    "dashboardName": {
+      "type": "string",
+      "value": "[variables('dashboardName')]"
     },
     "workspaceToken": {
       "type": "string",
