@@ -34,7 +34,7 @@
       "type": "string"
     },
     "instanceName": {
-      "defaultValue": "f5vm",
+      "defaultValue": "f5bigip",
       "metadata": {
         "description": "Name of the Virtual Machine."
       },
@@ -136,7 +136,7 @@
         "12.1.303000",
         "latest"
       ],
-      "defaultValue": "13.1.100000",
+      "defaultValue": "latest",
       "metadata": {
         "description": "F5 BIG-IP version you want to use."
       },
@@ -183,6 +183,8 @@
     "baseUrl": "https://raw.githubusercontent.com/gregcoward/AzureOMSWorkspaceIntegration/master",
     "omsTemplateLink": "[concat(variables('baseUrl'), '/omsdeploy.json')]",
     "dashTemplateLink": "[concat(variables('baseUrl'), '/dashdeploy.json')]",
+    "shellLink": "[concat(variables('baseUrl'), '/deploy_waf.sh')]",
+    "iappLink": "[concat(variables('baseUrl'), '/f5.http.v1.2.0.tmpl')]",
     "paygImageMap": {
       "advancedwaf1gbps": {
         "offer": "f5-big-ip-advanced-waf",
@@ -353,6 +355,7 @@
     "mgmtSubnetId": "[concat(variables('vnetId'), '/subnets/', variables('mgmtSubnetName'))]",
     "mgmtSubnetPrefix": "[concat(parameters('vnetAddressPrefix'), '.1.0/24')]",
     "mgmtSubnetPrivateAddress": "[concat(parameters('vnetAddressPrefix'), '.1.4')]",
+    "webserverPrivateAddress": "[concat(parameters('vnetAddressPrefix'), '.1.5')]",
     "mgmtRouteGw": "[concat(parameters('vnetAddressPrefix'), '.1.1')]",
     "tagValues": "[parameters('tagValues')]",
     "newDataStorageAccountName": "[concat(uniqueString(variables('dnsLabel'), resourceGroup().id, deployment().name), 'data000')]",
@@ -406,7 +409,8 @@
       "Standard_GS5"
     ],
     "customConfig": "### START (INPUT) CUSTOM CONFIGURATION HERE\n",
-    "installCustomConfig": "[concat(variables('singleQuote'), '#!/bin/bash\n', variables('customConfig'), variables('singleQuote'))]"
+    "installCustomConfig": "[concat(variables('singleQuote'), '#!/bin/bash\n', variables('customConfig'), variables('singleQuote'))]",
+    "commandArgs": "[concat('-p ', variables('webserverPrivateAddress'))]"
   },
   "resources": [
     {
@@ -422,6 +426,9 @@
           "contentVersion": "1.0.0.0"
         },
         "parameters": {
+          "dnsLabel": {
+            "value": "[parameters('dnsLabel')]"
+          }
         }
       }
     },
@@ -526,6 +533,20 @@
               "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
               "sourcePortRange": "*"
             }
+          },
+          {
+            "name": "ssh_allow_80",
+            "properties": {
+              "access": "Allow",
+              "description": "",
+              "destinationAddressPrefix": "*",
+              "destinationPortRange": "80",
+              "direction": "Inbound",
+              "priority": 103,
+              "protocol": "Tcp",
+              "sourceAddressPrefix": "[parameters('restrictedSrcAddress')]",
+              "sourcePortRange": "*"
+            }
           }
         ]
       },
@@ -578,6 +599,81 @@
       },
       "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
       "type": "Microsoft.Compute/images"
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "name": "webserver-nic",
+      "apiVersion": "[variables('networkApiVersion')]",
+      "location": "[variables('location')]",
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "webserver-ipconfig1",
+            "properties": {
+              "subnet": {
+                "id": "[variables('mgmtSubnetId')]"
+              },
+              "privateIPAddress": "[variables('webserverPrivateAddress')]",
+              "privateIPAllocationMethod": "Static"
+            }
+          }
+        ]
+      },
+      "dependsOn": [
+        "[variables('vnetId')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "name": "webserver",
+      "apiVersion": "2018-06-01",
+      "location": "[variables('location')]",
+      "plan": {
+        "name": "ubuntu1804ltswebserver",
+        "publisher": "tunnelbiz",
+        "product": "ubuntu_server"
+      },
+      "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "Basic_A0"
+        },
+        "storageProfile": {
+          "osDisk": {
+            "createOption": "fromImage",
+            "managedDisk": {
+              "storageAccountType": "StandardSSD_LRS"
+            }
+          },
+          "imageReference": {
+            "publisher": "tunnelbiz",
+            "offer": "ubuntu_server",
+            "sku": "ubuntu1804ltswebserver",
+            "version": "0.0.1"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces', 'webserver-nic')]"
+            }
+          ]
+        },
+        "osProfile": {
+          "computerName": "webserver",
+          "adminPassword": "[variables('adminPasswordOrKey')]",
+          "adminUsername": "[parameters('adminUsername')]"
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": false
+          }
+        }
+      },
+      "dependsOn": [
+        "[concat('Microsoft.Network/networkInterfaces/', 'webserver-nic')]"
+      ]
     },
     {
       "apiVersion": "[variables('computeApiVersion')]",
@@ -633,11 +729,12 @@
       "name": "[concat(variables('instanceName'),'/start')]",
       "properties": {
         "protectedSettings": {
-          "commandToExecute": "[concat('function cp_logs() { cd /var/lib/waagent/custom-script/download && cp `ls -r | head -1`/std* /var/log/cloud/azure; cd /var/log/cloud/azure && cat stdout stderr > install.log; }; CLOUD_LIB_DIR=/config/cloud/azure/node_modules/@f5devcentral; mkdir -p $CLOUD_LIB_DIR && cp f5-cloud-libs.tar.gz* /config/cloud; mkdir -p /var/log/cloud/azure;/usr/bin/install -m 400 /dev/null /config/cloud/.passwd; /usr/bin/install -b -m 755 /dev/null /config/verifyHash; /usr/bin/install -b -m 755 /dev/null /config/installCloudLibs.sh; IFS=', variables('singleQuote'), '%', variables('singleQuote'), '; echo -e ', variables('verifyHash'), ' >> /config/verifyHash; echo -e ', variables('installCloudLibs'), ' >> /config/installCloudLibs.sh; echo -e ', variables('installCustomConfig'), ' >> /config/customConfig.sh; unset IFS; bash /config/installCloudLibs.sh; source $CLOUD_LIB_DIR/f5-cloud-libs/scripts/util.sh; encrypt_secret ', variables('singleQuote'), variables('adminPasswordOrKey'), variables('singleQuote'), ' \"/config/cloud/.passwd\" true; $CLOUD_LIB_DIR/f5-cloud-libs/scripts/createUser.sh --user svc_user --password-file /config/cloud/.passwd --password-encrypted;', variables('allowUsageAnalytics').hashCmd, '; /usr/bin/f5-rest-node $CLOUD_LIB_DIR/f5-cloud-libs/scripts/onboard.js --output /var/log/cloud/azure/onboard.log --signal ONBOARD_DONE --log-level info --cloud azure --host ', variables('mgmtSubnetPrivateAddress'), ' --port ', variables('bigIpMgmtPort'), ' -u svc_user --password-url file:///config/cloud/.passwd --password-encrypted --hostname ', concat(variables('instanceName'), '.', variables('location'), '.cloudapp.azure.com'),  ' --ntp ', variables('ntpServer'), ' --tz ', variables('timeZone'), ' --db tmm.maxremoteloglength:2048', variables('allowUsageAnalytics').metricsCmd, ' --module asm:nominal --module ltm:nominal', '; if [[ $? == 0 ]]; then tmsh load sys application template f5.service_discovery.tmpl; tmsh load sys application template f5.cloud_logger.v1.0.0.tmpl; tmsh create sys application service f5cloudlogger template f5.cloud_logger.v1.0.0 lists add { logging_config__ltm_req_log_options { value { CLIENT_IP SERVER_IP HTTP_METHOD HTTP_URI VIRTUAL_NAME }}} variables add { analytics_config__analytics_solution { value azure_oms } analytics_config__log_type { value F5CustomLog } analytics_config__shared_key { encrypted no value ', reference('omsLinkedTemplate').outputs.workspaceToken.value,' } analytics_config__workspace { value ', reference('omsLinkedTemplate').outputs.workspaceId.value,' } basic__advanced { value no } basic__help { value hide } internal_config__hostname { value yes } internal_config__port { value yes } logging_config__asm_log_choice { value yes } logging_config__asm_log_level { value log_illegal } logging_config__dos_logs { value yes } logging_config__ltm_req_log_choice {  value yes }}; bash /config/customConfig.sh; $(cp_logs); else $(cp_logs); exit 1; fi', '; if grep -i \"PUT failed\" /var/log/waagent.log -q; then echo \"Killing waagent exthandler, daemon should restart it\"; pkill -f \"python -u /usr/sbin/waagent -run-exthandlers\"; fi')]"
+          "commandToExecute": "[concat('function cp_logs() { cd /var/lib/waagent/custom-script/download && cp `ls -r | head -1`/std* /var/log/cloud/azure; cd /var/log/cloud/azure && cat stdout stderr > install.log; }; CLOUD_LIB_DIR=/config/cloud/azure/node_modules/@f5devcentral; mkdir -p $CLOUD_LIB_DIR && cp f5-cloud-libs.tar.gz* /config/cloud; mkdir -p /var/log/cloud/azure;/usr/bin/install -m 400 /dev/null /config/cloud/.passwd; /usr/bin/install -b -m 755 /dev/null /config/verifyHash; /usr/bin/install -b -m 755 /dev/null /config/installCloudLibs.sh; IFS=', variables('singleQuote'), '%', variables('singleQuote'), '; echo -e ', variables('verifyHash'), ' >> /config/verifyHash; echo -e ', variables('installCloudLibs'), ' >> /config/installCloudLibs.sh; echo -e ', variables('installCustomConfig'), ' >> /config/customConfig.sh; unset IFS; bash /config/installCloudLibs.sh; source $CLOUD_LIB_DIR/f5-cloud-libs/scripts/util.sh; encrypt_secret ', variables('singleQuote'), variables('adminPasswordOrKey'), variables('singleQuote'), ' \"/config/cloud/.passwd\" true; $CLOUD_LIB_DIR/f5-cloud-libs/scripts/createUser.sh --user svc_user --password-file /config/cloud/.passwd --password-encrypted;', variables('allowUsageAnalytics').hashCmd, '; /usr/bin/f5-rest-node $CLOUD_LIB_DIR/f5-cloud-libs/scripts/onboard.js --output /var/log/cloud/azure/onboard.log --signal ONBOARD_DONE --log-level info --cloud azure --host ', variables('mgmtSubnetPrivateAddress'), ' --port ', variables('bigIpMgmtPort'), ' -u svc_user --password-url file:///config/cloud/.passwd --password-encrypted --hostname ', concat(variables('instanceName'), '.', variables('location'), '.cloudapp.azure.com'),  ' --ntp ', variables('ntpServer'), ' --tz ', variables('timeZone'), ' --db tmm.maxremoteloglength:2048', variables('allowUsageAnalytics').metricsCmd, ' --module asm:nominal --module ltm:nominal', '; if [[ $? == 0 ]]; then tmsh load sys application template f5.service_discovery.tmpl; tmsh load sys application template f5.cloud_logger.v1.0.0.tmpl; tmsh load sys application template f5.http.v1.2.0.tmpl; tmsh create sys application service f5cloudlogger template f5.cloud_logger.v1.0.0 lists add { logging_config__ltm_req_log_options { value { CLIENT_IP SERVER_IP HTTP_METHOD HTTP_URI VIRTUAL_NAME }}} variables add { analytics_config__analytics_solution { value azure_oms } analytics_config__log_type { value F5CustomLog } analytics_config__shared_key { encrypted no value ', reference('omsLinkedTemplate').outputs.workspaceToken.value,' } analytics_config__workspace { value ', reference('omsLinkedTemplate').outputs.workspaceId.value,' } basic__advanced { value no } basic__help { value hide } internal_config__hostname { value yes } internal_config__port { value yes } logging_config__asm_log_choice { value yes } logging_config__asm_log_level { value log_illegal } logging_config__dos_logs { value yes } logging_config__ltm_req_log_choice {  value yes }};  /usr/bin/f5-rest-node $CLOUD_LIB_DIR/f5-cloud-libs/scripts/runScript.js --wait-for ONBOARD_DONE --output /var/log/cloud/azure/runScript.log --log-level debug --url ', variables('shellLink'), ' --cl-args ', variables('singleQuote'), variables('commandArgs'), variables('singleQuote'), '; bash /config/customConfig.sh; $(cp_logs); else $(cp_logs); exit 1; fi', '; if grep -i \"PUT failed\" /var/log/waagent.log -q; then echo \"Killing waagent exthandler, daemon should restart it\"; pkill -f \"python -u /usr/sbin/waagent -run-exthandlers\"; fi')]"
         },
         "publisher": "Microsoft.Azure.Extensions",
         "settings": {
           "fileUris": [
+            "[variables('iAppLink')]",
             "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-libs/', variables('f5CloudLibsTag'), '/dist/f5-cloud-libs.tar.gz')]",
             "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-iapps/', variables('f5CloudIappsTag'), '/f5-service-discovery/f5.service_discovery.tmpl')]",
             "[concat('https://raw.githubusercontent.com/F5Networks/f5-cloud-iapps/', variables('f5CloudIappsTag'), '/f5-cloud-logger/f5.cloud_logger.v1.0.0.tmpl')]"
@@ -648,26 +745,6 @@
       },
       "tags": "[if(empty(variables('tagValues')), json('null'), variables('tagValues'))]",
       "type": "Microsoft.Compute/virtualMachines/extensions"
-    },
-    {
-      "apiVersion": "[variables('templateApiVersion')]",
-      "name": "dashLinkedTemplate",
-      "type": "Microsoft.Resources/deployments",
-      "dependsOn": [
-        "[concat('Microsoft.Compute/virtualMachines/', variables('instanceName'),'/extensions/start')]"
-      ],
-      "properties": {
-        "mode": "incremental",
-        "templateLink": {
-          "uri": "[variables('dashTemplateLink')]",
-          "contentVersion": "1.0.0.0"
-        },
-        "parameters": {
-          "workspaceName": {
-            "value": "[reference('omsLinkedTemplate').outputs.workspaceName.value]"
-          }
-        }
-      }
     }
   ],
   "outputs": {
